@@ -2,20 +2,47 @@
 //  ContentView.swift
 //  WeatherApp
 //
-//  Created by Chetan Sharma on 24/03/24.
+//  Created by Yogeshwar Sharma on 24/03/24.
 //
 
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject var locationManager = LocationManager()
+    var weatherManager = WeatherManager()
+    @State var weather: ResponseBody?
+    
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            if let location = locationManager.location{
+//                Text("Your co-ordinates are: \(location.longitude),\(location.latitude)")
+                if let weather = weather{
+                    WeatherView(weather: weather)
+                }else{
+                    LoadingView()
+                        .task {
+                            do{
+                                weather = try await weatherManager.getCurrentWeather(latitude: location.latitude, longitude: location.longitude)
+                                
+                            }catch{
+                                print("Error getting weather: \(error)")
+                            }
+                    }
+                }
+                
+            }else{
+                if locationManager.isLoading{
+                    LoadingView()
+                }
+                else{
+                    WelcomeView().environmentObject(locationManager)
+                    
+                }
+            }
         }
-        .padding()
+        .background(Color(.blue))
+        .preferredColorScheme(.dark)
     }
 }
 
